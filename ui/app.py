@@ -177,7 +177,7 @@ with st.sidebar:
     ca.metric("Docs", len(st.session_state.documents))
     cb.metric("Queries", len(st.session_state.responses))
     # Show which vector backend is active
-    backend = agent.retriever.backend
+    backend = getattr(agent.retriever, 'backend', 'hybrid')
     if backend == "pgvector":
         st.markdown("🟢 **Vector store: pgvector** (persistent)")
     else:
