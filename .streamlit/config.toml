@@ -1,0 +1,19 @@
+[theme]
+base = "dark"
+primaryColor = "#3B82F6"
+backgroundColor = "#0B0F14"
+secondaryBackgroundColor = "#1A2332"
+textColor = "#E8ECF1"
+font = "sans serif"
+
+[server]
+maxUploadSize = 200
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+# Prevents Streamlit rerunning on every tiny state change during uploads
+fastReruns = true

@@ -1,0 +1,38 @@
+# Secrets — never commit these
+.env
+.streamlit/secrets.toml
+
+# Virtual environments
+venv/
+.venv/
+finAgent/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data — keep sample, ignore uploaded PDFs
+data/*.pdf
+data/embeddings/
+!data/sample_financials.csv
+!data/generate_sample.py
+
+# Streamlit cache
+.streamlit/cache/

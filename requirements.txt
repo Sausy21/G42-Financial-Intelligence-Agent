@@ -1,0 +1,48 @@
+# Core agent framework
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-community>=0.3.0
+
+# LLM — Groq cloud API (free tier, fast)
+groq>=0.11.0
+
+# Document ingestion
+pdfplumber>=0.11.0
+pytesseract>=0.3.10
+Pillow>=10.0.0
+
+# RAG & embeddings (local sentence-transformers)
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+rank-bm25>=0.2.2
+
+# PyTorch CPU-only — keeps Streamlit Cloud slug small
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2.0
+torchvision>=0.17.0
+
+# Financial tools
+pandas>=2.2.0
+numpy>=1.26.0
+scipy>=1.13.0
+statsmodels>=0.14.0
+prophet>=1.1.5
+
+# Structured output
+pydantic>=2.9.0
+tabulate>=0.9.0
+
+# UI
+streamlit>=1.38.0
+plotly>=5.22.0
+
+# Utilities
+python-dotenv>=1.0.0
+rich>=13.7.0
+
+# Database — pgvector persistent backend (optional, activated by PGVECTOR_URL)
+psycopg2-binary>=2.9.9
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=5.0.0
