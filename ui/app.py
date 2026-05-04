@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 from agent.graph import FinancialIntelligenceAgent
 from models.schemas import AgentResponse
 
+import concurrent.futures
+
 logging.basicConfig(level=logging.INFO)
 
 st.set_page_config(page_title="G42 Financial Intelligence Agent",
@@ -140,7 +142,9 @@ with st.sidebar:
                     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(up.name).suffix) as tmp:
                         tmp.write(up.read()); tmp_path = tmp.name
                     try:
-                        chunks = agent.ingest_document(tmp_path, original_name=up.name)
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(agent.ingest_document, tmp_path, original_name=up.name)
+                            chunks = future.result(timeout=300)
                         st.session_state.documents.append(up.name)
                         st.success(f"✓ {up.name} — {len(chunks)} sections")
                     except Exception as e:
