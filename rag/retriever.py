@@ -457,7 +457,6 @@ class HybridRetriever:
         self.dense_weight = dense_weight
         self.sparse_weight = sparse_weight
         self._query_cache: dict[str, np.ndarray] = {}
-        self.backend = "hybrid"
 
     @property
     def backend(self) -> str:
