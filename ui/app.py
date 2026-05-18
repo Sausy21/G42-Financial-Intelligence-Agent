@@ -17,8 +17,6 @@ import time
 
 logging.basicConfig(level=logging.INFO)
 
-_ingest_results: dict = {} # thread-safe result store
-
 st.set_page_config(page_title="G42 Financial Intelligence Agent",
                    page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
@@ -147,32 +145,39 @@ with st.sidebar:
 
                 # First visit — kick off background thread
                 if key not in st.session_state:
+                    file_bytes = up.read()
                     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(up.name).suffix) as tmp:
-                        tmp.write(up.read())
+                        tmp.write(file_bytes)
                         tmp_path = tmp.name
-                    st.session_state[key] = {"status": "running", "chunks": None, "error": None}
+                    
+                    result_store = {} # mutable dict - thread writes here directly
+                    st.session_state[key] = {"status": "running", "store": result_store}
 
-                    def _worker(path, name, k):
+                    def _worker(path, name, store):
                         try:
                             chunks = agent.ingest_document(path, original_name=name)
-                            _ingest_results[k] = {"status": "done", "chunks": chunks}
+                            store["status"] = "done"
+                            store["chunks"] = chunks
                         except Exception as e:
-                            _ingest_results[k] = {"status": "error", "error": str(e)}
+                            store["status"] = "error"
+                            store["error"] = str(e)
 
-                    threading.Thread(target=_worker, args=(tmp_path, up.name, key), daemon=True).start()
+                    threading.Thread(target=_worker, args=(tmp_path, up.name, result_store), daemon=True).start()
 
-                # Step 3 — Check result and update UI  ← REPLACES the old status check
-                if key in _ingest_results:
-                    result = _ingest_results.pop(key)
+                # Check result via the mutable reference stored in session_state
+                state = st.session_state.get(key, {})
+                store = state.get("store", {})
+                
+                if store.get("status") == "done":
+                    st.session_state.documents.append(up.name)
+                    st.success(f"✓ {up.name} — {len(store['chunks'])} sections")
                     del st.session_state[key]
-                    if result["status"] == "done":
-                        st.session_state.documents.append(up.name)
-                        st.success(f"✓ {up.name} — {len(result['chunks'])} sections")
-                    else:
-                        st.error(f"Failed: {result['error']}")
                     st.rerun()
-                    
-                elif st.session_state.get(key, {}).get("status") == "running":
+                elif store.get("status") == "error":
+                    st.error(f"Failed: {store['error']}")
+                    del st.session_state[key]
+                    st.rerun()
+                else:
                     with st.spinner(f"⏳ Indexing {up.name} — please wait…"):
                         time.sleep(3)
                     st.rerun()
