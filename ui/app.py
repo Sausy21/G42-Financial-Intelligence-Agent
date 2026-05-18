@@ -170,6 +170,8 @@ with st.sidebar:
                         st.success(f"✓ {up.name} — {len(result['chunks'])} sections")
                     else:
                         st.error(f"Failed: {result['error']}")
+                    st.rerun()
+                    
                 elif st.session_state.get(key, {}).get("status") == "running":
                     with st.spinner(f"⏳ Indexing {up.name} — please wait…"):
                         time.sleep(3)
