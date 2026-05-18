@@ -164,8 +164,8 @@ with st.sidebar:
                 state = st.session_state[key]
 
                 if state["status"] == "running":
-                    st.spinner(f"⏳ Indexing {up.name} — please wait…")
-                    time.sleep(3)
+                    with st.spinner(f"⏳ Indexing {up.name} — please wait…"):
+                        time.sleep(3)
                     st.rerun()  # keeps Streamlit alive and WebSocket active
 
                 elif state["status"] == "done":
