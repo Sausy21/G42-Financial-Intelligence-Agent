@@ -447,11 +447,11 @@ class HybridRetriever:
 
     def __init__(
         self,
-        embedder: Optional[Embedder] = None,
-        dense_weight: float = 0.6,
-        sparse_weight: float = 0.4,
+        embedder = None,
+        dense_weight = 0.6,
+        sparse_weight = 0.4,
     ):
-        self.embedder = embedder or Embedder()
+        self._embedder = embedder
         self.vector_store = make_vector_store()
         self.bm25_index = BM25Index()
         self.dense_weight = dense_weight
@@ -461,6 +461,12 @@ class HybridRetriever:
     @property
     def backend(self) -> str:
         return "pgvector" if isinstance(self.vector_store, PgVectorStore) else "faiss"
+    
+    @property
+    def embedder(self):
+        if self._embedder is None:
+            self._embedder = Embedder()
+        return self._embedder
 
     def index_chunks(self, chunks: list[DocumentChunk]):
         if not chunks:
