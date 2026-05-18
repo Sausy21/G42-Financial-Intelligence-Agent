@@ -114,7 +114,7 @@ class Embedder:
             return np.array([])
         return self.model.encode(
             texts, show_progress_bar=len(texts) > 50,
-            batch_size=64, convert_to_numpy=True,
+            batch_size=16, convert_to_numpy=True,
         ).astype(np.float32)
 
     def embed_query(self, query: str) -> np.ndarray:

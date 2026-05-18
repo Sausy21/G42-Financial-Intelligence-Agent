@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-import pdfplumber
+import pdfplumber, gc
 import pandas as pd
 
 from models.schemas import DocumentChunk
@@ -80,14 +80,21 @@ class PDFExtractor:
                 page_tables = self._extract_tables(page)
                 current_tables.extend(page_tables)
 
-            if current_text_parts:
-                chunks.append(self._make_chunk(
-                    document_name=doc_name,
-                    section_heading=current_section,
-                    page_number=current_page,
-                    text="\n".join(current_text_parts),
-                    tables=current_tables,
-                ))
+                # ── Force flush if accumulated text is too large ──────────────────
+                if sum(len(t) for t in current_text_parts) > 40_000:
+                    chunks.append(self._make_chunk(
+                        document_name=doc_name,
+                        section_heading=current_section,
+                        page_number=current_page,
+                        text="\n".join(current_text_parts),
+                        tables=current_tables,
+                    ))
+                    current_text_parts = []
+                    current_tables = []
+
+                # ── Release memory every 20 pages ────────────────────────────────
+                if page_num % 20 == 0:
+                    gc.collect()
 
         logger.info(f"Extracted {len(chunks)} chunks from {doc_name}")
         return chunks
@@ -176,7 +183,7 @@ class PDFExtractor:
         """OCR a scanned page using pytesseract."""
         try:
             import pytesseract
-            image = page.to_image(resolution=300).original
+            image = page.to_image(resolution=150).original
             return pytesseract.image_to_string(image)
         except ImportError:
             logger.warning("pytesseract not installed — skipping OCR")
