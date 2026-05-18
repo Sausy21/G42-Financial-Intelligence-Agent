@@ -17,6 +17,8 @@ import time
 
 logging.basicConfig(level=logging.INFO)
 
+_ingest_results: dict = {} # thread-safe result store
+
 st.set_page_config(page_title="G42 Financial Intelligence Agent",
                    page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
@@ -153,29 +155,25 @@ with st.sidebar:
                     def _worker(path, name, k):
                         try:
                             chunks = agent.ingest_document(path, original_name=name)
-                            st.session_state[k]["chunks"] = chunks
-                            st.session_state[k]["status"] = "done"
+                            _ingest_results[k] = {"status": "done", "chunks": chunks}
                         except Exception as e:
-                            st.session_state[k]["status"] = "error"
-                            st.session_state[k]["error"] = str(e)
+                            _ingest_results[k] = {"status": "error", "error": str(e)}
 
                     threading.Thread(target=_worker, args=(tmp_path, up.name, key), daemon=True).start()
 
-                state = st.session_state[key]
-
-                if state["status"] == "running":
+                # Step 3 — Check result and update UI  ← REPLACES the old status check
+                if key in _ingest_results:
+                    result = _ingest_results.pop(key)
+                    del st.session_state[key]
+                    if result["status"] == "done":
+                        st.session_state.documents.append(up.name)
+                        st.success(f"✓ {up.name} — {len(result['chunks'])} sections")
+                    else:
+                        st.error(f"Failed: {result['error']}")
+                elif st.session_state.get(key, {}).get("status") == "running":
                     with st.spinner(f"⏳ Indexing {up.name} — please wait…"):
                         time.sleep(3)
-                    st.rerun()  # keeps Streamlit alive and WebSocket active
-
-                elif state["status"] == "done":
-                    st.session_state.documents.append(up.name)
-                    st.success(f"✓ {up.name} — {len(state['chunks'])} sections")
-                    del st.session_state[key]
-
-                elif state["status"] == "error":
-                    st.error(f"Failed: {state['error']}")
-                    del st.session_state[key]
+                    st.rerun()
 
     # ── Indexed documents + remove buttons ────────────────────────────
     if st.session_state.documents:
