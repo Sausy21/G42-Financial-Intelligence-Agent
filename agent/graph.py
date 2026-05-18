@@ -51,7 +51,7 @@ class FinancialIntelligenceAgent:
     Can run standalone (CLI) or be driven by the Streamlit UI.
     """
 
-    def __init__(self, model: str = "gemma2-9b-it"):
+    def __init__(self, model: str = "llama-3.1-8b-instant"):
         self.model = os.getenv("AGENT_MODEL", model)
 
         # Pipeline components
@@ -110,7 +110,6 @@ class FinancialIntelligenceAgent:
         Queries the Groq API; returns empty list if key is missing or API is down.
         """
         GROQ_MODELS = [
-            {"name": "gemma2-9b-it",              "context": 8_192},
             {"name": "llama-3.1-8b-instant",    "context": 128_000},
             {"name": "llama-3.3-70b-versatile",  "context": 128_000},
             {"name": "llama-3.1-70b-versatile",  "context": 128_000},
