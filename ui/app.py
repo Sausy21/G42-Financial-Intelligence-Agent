@@ -36,6 +36,9 @@ h1,h2,h3{color:#E8ECF1!important}
 .fn-eps{color:#22D3EE;font-weight:600;font-family:monospace}
 </style>""", unsafe_allow_html=True)
 
+def strip_html(text: str) -> str:
+    """Remove any HTML tags the LLM may have generated in its output."""
+    return re.sub(r'<[^>]+>', '', text)
 
 def highlight_numbers(text: str) -> str:
     if not text:
@@ -349,7 +352,7 @@ if prompt := st.chat_input("Ask about your financial documents…"):
             with st.spinner("🔍 Retrieving → 🤖 Analyzing… (10–30s on first query)"):
                 resp = agent.query(prompt)
             st.session_state.responses.append(resp)
-            st.markdown(highlight_numbers(resp.answer), unsafe_allow_html=True)
+            st.markdown(highlight_numbers(strip_html(resp.answer)), unsafe_allow_html=True)
             render_panels(resp, resp_idx=len(st.session_state.responses) - 1)
             st.session_state.chat_history.append({"role":"assistant","content":resp.answer})
 
