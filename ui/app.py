@@ -12,6 +12,9 @@ from models.schemas import AgentResponse
 
 import concurrent.futures
 
+import threading
+import time
+
 logging.basicConfig(level=logging.INFO)
 
 st.set_page_config(page_title="G42 Financial Intelligence Agent",
@@ -138,17 +141,41 @@ with st.sidebar:
     if uploaded_files:
         for up in uploaded_files:
             if up.name not in st.session_state.documents:
-                with st.spinner(f"Indexing {up.name}…"):
+                key = f"_ingest_{up.name}"
+
+                # First visit — kick off background thread
+                if key not in st.session_state:
                     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(up.name).suffix) as tmp:
-                        tmp.write(up.read()); tmp_path = tmp.name
-                    try:
-                        with concurrent.futures.ThreadPoolExecutor() as executor:
-                            future = executor.submit(agent.ingest_document, tmp_path, original_name=up.name)
-                            chunks = future.result(timeout=300)
-                        st.session_state.documents.append(up.name)
-                        st.success(f"✓ {up.name} — {len(chunks)} sections")
-                    except Exception as e:
-                        st.error(f"Failed: {e}")
+                        tmp.write(up.read())
+                        tmp_path = tmp.name
+                    st.session_state[key] = {"status": "running", "chunks": None, "error": None}
+
+                    def _worker(path, name, k):
+                        try:
+                            chunks = agent.ingest_document(path, original_name=name)
+                            st.session_state[k]["chunks"] = chunks
+                            st.session_state[k]["status"] = "done"
+                        except Exception as e:
+                            st.session_state[k]["status"] = "error"
+                            st.session_state[k]["error"] = str(e)
+
+                    threading.Thread(target=_worker, args=(tmp_path, up.name, key), daemon=True).start()
+
+                state = st.session_state[key]
+
+                if state["status"] == "running":
+                    st.spinner(f"⏳ Indexing {up.name} — please wait…")
+                    time.sleep(3)
+                    st.rerun()  # keeps Streamlit alive and WebSocket active
+
+                elif state["status"] == "done":
+                    st.session_state.documents.append(up.name)
+                    st.success(f"✓ {up.name} — {len(state['chunks'])} sections")
+                    del st.session_state[key]
+
+                elif state["status"] == "error":
+                    st.error(f"Failed: {state['error']}")
+                    del st.session_state[key]
 
     # ── Indexed documents + remove buttons ────────────────────────────
     if st.session_state.documents:
