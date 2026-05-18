@@ -520,7 +520,7 @@ class HybridRetriever:
         for chunk, score in results:
             contexts.append(
                 f"[Source: {chunk.document_name} | Section: {chunk.section_heading} | "
-                f"Page: {chunk.page_number}]\n{chunk.text}"
+                f"Page: {chunk.page_number}]\n{chunk.text[:400]}"
             )
             citations.append(Citation(
                 source_document=chunk.document_name,

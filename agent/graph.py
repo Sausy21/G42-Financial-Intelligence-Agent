@@ -249,7 +249,7 @@ class FinancialIntelligenceAgent:
                     all_contexts.append(
                         f"[Source: {chunk.document_name} | "
                         f"Section: {chunk.section_heading} | "
-                        f"Page: {chunk.page_number}]\n{chunk.text}"
+                        f"Page: {chunk.page_number}]\n{chunk.text[:400]}"
                     )
                     from models.schemas import Citation
                     all_citations.append(Citation(
@@ -283,7 +283,7 @@ class FinancialIntelligenceAgent:
             "total assets current assets current liabilities total equity shareholders equity",
             "total debt borrowings free cash flow capital expenditure",
         ]
-        rich_contexts, rich_citations = self._retrieve_multi(ratio_queries, k_each=4)
+        rich_contexts, rich_citations = self._retrieve_multi(ratio_queries, k_each=2)
 
         # Merge with the original query's context (keeps any unique results)
         existing_ids = {c.section for c in rich_citations}
